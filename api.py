@@ -149,7 +149,7 @@ def predict():
         probs = model.predict_proba(vec)[0]
 
         return jsonify({
-            "prediction": "STRESSED" if pred == 1 else "NOT STRESSED",
+            "prediction": "ANXIOUS" if pred == 1 else "NOT ANXIOUS",
             "stress_probability": round(float(probs[1]), 4),
             "confidence": round(float(max(probs)), 4),
             "hr_readings_used": len(chunk),
