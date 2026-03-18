@@ -55,54 +55,34 @@ else:
 
 
 # ── Feature computation (same as training) ────────────────────────────────────
+# ── Feature computation — Mandal et al. (2023), 6 features exactly ───────────
 def compute_features(hr_chunk, global_stats):
+    """
+    Exactly 6 features from the paper (Equations 1-6).
+    Only global mean and global median are needed — max/min/std are not
+    used in any of the 6 features.
+
+    l_g_mean_ratio   = local mean   / global mean         (Eq. 1)
+    l_g_median_ratio = local median / global median       (Eq. 2)
+    l_g_mean_diff    = sqrt((local mean   - global mean)²)   (Eq. 3)
+    l_g_median_diff  = sqrt((local median - global median)²) (Eq. 4)
+    l_diff           = local max HR - local min HR        (Eq. 5)
+    l_ssd            = std dev of HR values in chunk      (Eq. 6)
+    """
     hr = np.array(hr_chunk, dtype=float)
+    g  = global_stats
 
-    local_mean = np.mean(hr)
+    local_mean   = np.mean(hr)
     local_median = np.median(hr)
-    local_max = np.max(hr)
-    local_min = np.min(hr)
-    local_std = np.std(hr)
-    local_range = local_max - local_min
-
-    g = global_stats
-
-    mean_ratio = local_mean / g['mean'] if g['mean'] != 0 else 1.0
-    median_ratio = local_median / g['median'] if g['median'] != 0 else 1.0
-    max_ratio = local_max / g['max'] if g['max'] != 0 else 1.0
-    min_ratio = local_min / g['min'] if g['min'] != 0 else 1.0
-    std_ratio = local_std / g['std'] if g['std'] != 0 else 1.0
-
-    mean_diff = np.sqrt((local_mean - g['mean'])**2)
-    median_diff = np.sqrt((local_median - g['median'])**2)
-    max_diff = np.sqrt((local_max - g['max'])**2)
-    min_diff = np.sqrt((local_min - g['min'])**2)
-
-    if len(hr) >= 4:
-        half = len(hr) // 2
-        trend = np.mean(hr[half:]) - np.mean(hr[:half])
-    else:
-        trend = 0.0
-
-    cv = local_std / local_mean if local_mean != 0 else 0.0
 
     return {
-        'mean_ratio': mean_ratio,
-        'median_ratio': median_ratio,
-        'max_ratio': max_ratio,
-        'min_ratio': min_ratio,
-        'std_ratio': std_ratio,
-        'mean_diff': mean_diff,
-        'median_diff': median_diff,
-        'max_diff': max_diff,
-        'min_diff': min_diff,
-        'local_range': local_range,
-        'local_std': local_std,
-        'trend': trend,
-        'cv': cv,
-        'local_mean': local_mean,
+        'l_g_mean_ratio':   local_mean   / g['mean']   if g['mean']   != 0 else 1.0,
+        'l_g_median_ratio': local_median / g['median'] if g['median'] != 0 else 1.0,
+        'l_g_mean_diff':    np.sqrt((local_mean   - g['mean'])   ** 2),
+        'l_g_median_diff':  np.sqrt((local_median - g['median']) ** 2),
+        'l_diff':           float(np.max(hr) - np.min(hr)),
+        'l_ssd':            float(np.std(hr)),
     }
-
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
